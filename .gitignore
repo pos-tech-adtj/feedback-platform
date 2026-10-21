@@ -1,0 +1,26 @@
+# Maven e compilação
+target/
+
+# Configurações locais e segredos
+local.settings.json
+.env
+.env.*
+!.env.example
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+__MACOSX/
+
+# Logs
+*.log
+
+# Arquivos temporários do Azurite
+.azurite/
+__azurite_db_*.json
+__blobstorage__/
+__queuestorage__/
