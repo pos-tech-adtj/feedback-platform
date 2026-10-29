@@ -8,6 +8,20 @@ persiste o record de domínio `Avaliacao` no container definido por ambiente, en
 autenticação usa `DefaultAzureCredential`: `az login` no desenvolvimento local e
 Managed Identity quando hospedado no Azure. Não use chaves de conta nem connection strings.
 
+### API para registrar avaliação
+
+`EnviarAvaliacaoFunction` expõe `POST /api/avaliacao` com nível de autorização
+`FUNCTION`. Envie um JSON com `descricao` e `nota` (de 0 a 10):
+
+```json
+{"descricao":"Aula muito boa","nota":9}
+```
+
+Uma solicitação válida retorna `201 Created` com a avaliação persistida; JSON inválido
+ou dados fora das regras retornam `400` com `{ "erro": "..." }`. A Function somente
+valida e delega a persistência para `AvaliacaoService`. O change feed do Cosmos é o
+responsável por acionar alertas, portanto falhas de e-mail não afetam este registro.
+
 Configure, sem versionar valores reais:
 
 ```text
