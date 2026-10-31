@@ -50,7 +50,6 @@ public class EnviarAvaliacaoFunction {
             return erro(request, "erro interno ao registrar avaliacao", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
     private static RequisicaoAvaliacao lerCorpo(Optional<String> corpo) throws JsonProcessingException {
         if (corpo == null || corpo.isEmpty() || corpo.get().isBlank()) {
             throw new IllegalArgumentException("corpo da requisicao e obrigatorio");
