@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.time.Instant;
-
 @EnabledIfEnvironmentVariable(named = "EMAIL_INTEGRATION_TEST", matches = "true")
 @EnabledIfEnvironmentVariable(named = "ACS_CONNECTION_STRING", matches = ".+")
 @EnabledIfEnvironmentVariable(named = "EMAIL_REMETENTE", matches = ".+")

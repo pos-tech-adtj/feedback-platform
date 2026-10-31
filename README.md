@@ -96,3 +96,29 @@ EMAIL_ADMINS=admin1@example.com,admin2@example.com
 
 `EMAIL_ADMINS` deve conter pelo menos um endereço, separado por vírgulas. Não
 versione valores reais dessas variáveis.
+
+## Relatório semanal
+
+`WeeklyReportFunction` é um Timer Trigger que envia o relatório aos endereços de `EMAIL_ADMINS`
+toda segunda-feira às 08h de Brasília. O `ReportService` busca as avaliações dos últimos 7 dias
+(incluindo hoje, no fuso `America/Sao_Paulo`), percorrendo todas as páginas de
+`AvaliacaoRepository.buscarDesde`, e calcula total, média das notas, quantidade por dia e por
+urgência, além da lista de descrição, urgência e data de envio.
+
+### Expressão cron e UTC
+
+A expressão é `0 0 11 * * MON` no formato NCRONTAB (`{segundo} {minuto} {hora} {dia} {mês} {dia-da-semana}`).
+Funções em planos serverless interpretam o cron em **UTC**, e não no horário local. Brasília está
+em UTC-3 e não adota horário de verão desde 2019, então 08:00 em Brasília equivale a 11:00 UTC.
+A constante está em `WeeklyReportFunction.CRON_SEGUNDA_08H_BRASILIA`; se o horário mudar, ajuste
+a hora para `hora_brasilia + 3`.
+
+### Disparo manual pelo portal
+
+Para validar sem esperar a segunda-feira, abra a Function App no Azure Portal, selecione
+`WeeklyReportFunction`, vá em **Code + Test** e use **Test/Run**. O e-mail deve chegar a todos os
+endereços em `EMAIL_ADMINS`. A função usa as mesmas variáveis de ambiente de e-mail descritas acima
+(`ACS_CONNECTION_STRING`, `EMAIL_REMETENTE`, `EMAIL_ADMINS`) e as de Cosmos DB.
+
+Se não houver avaliações no período, o relatório é enviado mesmo assim, indicando que não há
+avaliações..

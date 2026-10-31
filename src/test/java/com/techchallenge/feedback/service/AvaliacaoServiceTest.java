@@ -47,7 +47,6 @@ class AvaliacaoServiceTest {
         assertEquals("2026-10-24T23:30-03:00", avaliacao.dataEnvio());
         assertEquals(List.of(avaliacao), repository.salvas);
     }
-
     @Test
     void deveRetornarAvaliacaoMontadaMesmoQuandoRepositorioRetornaNull() {
         Avaliacao avaliacao = service.registrar("Aula muito boa", 9);
