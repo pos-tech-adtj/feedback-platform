@@ -29,6 +29,7 @@ public class EnviarAvaliacaoFunction {
         this.avaliacaoService = avaliacaoService;
     }
 
+    @FunctionName("EnviarAvaliacao")
     public HttpResponseMessage run(
             @HttpTrigger(
                     name = "request",
