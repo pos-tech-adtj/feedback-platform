@@ -1,43 +1,90 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
-# More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Java project to Azure Function App - appi-feedback
+name: CI/CD - Azure Function App | appi-feedback
 
 on:
   push:
     branches:
-      - 'main'
+      - main
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_NAME: appi-feedback # set this to your function app name on Azure
-  PACKAGE_DIRECTORY: '.' # set this to the directory which contains pom.xml file
-  JAVA_VERSION: '21' # set this to the java version to use
+  AZURE_FUNCTIONAPP_NAME: appi-feedback
+  PACKAGE_DIRECTORY: .
+  JAVA_VERSION: '21'
 
 jobs:
-  build-and-deploy:
+  # ==========================================
+  # 1. TESTS
+  # ==========================================
+  tests:
+    name: '1. Tests'
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
 
     steps:
-      - name: 'Checkout GitHub Action'
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
 
-      - name: 'Restore Project Dependencies Using Mvn'
-        shell: pwsh
-        run: |+
-          pushd './${{ env.PACKAGE_DIRECTORY }}'
-          mvn clean package
-          popd
-      
+      - name: Run tests
+        working-directory: ${{ env.PACKAGE_DIRECTORY }}
+        run: mvn -B clean test
+
+  # ==========================================
+  # 2. BUILD
+  # ==========================================
+  build:
+    name: '2. Build'
+    runs-on: ubuntu-latest
+    needs: tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Build Azure Function package
+        working-directory: ${{ env.PACKAGE_DIRECTORY }}
+        run: mvn -B clean package -DskipTests
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-function-package
+          path: target/azure-functions/${{ env.AZURE_FUNCTIONAPP_NAME }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  # ==========================================
+  # 3. DEPLOY
+  # ==========================================
+  deploy:
+    name: '3. Deploy'
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: azure-function-package
+          path: ./deploy-package
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -45,12 +92,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CD12C967EFBE4F97975A678566087796 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2D5F57A0E0C1486E82021F8CCF4CC173 }}
 
-      - name: 'Run Azure Functions Action'
+      - name: Deploy to Azure Function App
         uses: Azure/functions-action@v1
-        id: fa
         with:
-          app-name: 'appi-feedback'
-          slot-name: 'Production'
-          package: '${{ env.PACKAGE_DIRECTORY }}'
-          respect-pom-xml: true
-          
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          slot-name: Production
+          package: ./deploy-package
