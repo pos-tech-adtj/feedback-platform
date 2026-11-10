@@ -13,6 +13,9 @@ import com.techchallenge.feedback.service.NotificacaoUrgenciaService;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Recebe alterações do Cosmos DB e delega os alertas de avaliações críticas.
+ */
 public class NotificarUrgenciaFunction {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
@@ -20,6 +23,19 @@ public class NotificarUrgenciaFunction {
 
     private static volatile NotificacaoUrgenciaService service;
 
+    /**
+     * Cria a função; o serviço de notificação é inicializado no primeiro disparo.
+     */
+    public NotificarUrgenciaFunction() {
+    }
+
+    /**
+     * Processa o lote do change feed e registra a quantidade de alertas enviados.
+     *
+     * @param avaliacoesJson array JSON de avaliações alteradas
+     * @param context contexto de execução e logs
+     * @throws JsonProcessingException se o lote não puder ser desserializado
+     */
     @FunctionName("NotificarUrgencia")
     @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:10")
     public void run(
@@ -32,14 +48,14 @@ public class NotificarUrgenciaFunction {
             String avaliacoesJson,
             final ExecutionContext context) throws JsonProcessingException {
 
-        List<Avaliacao> avaliacoes = mapper(avaliacoesJson);
+        List<Avaliacao> avaliacoes = lerAvaliacoes(avaliacoesJson);
         context.getLogger().info("Change feed: " + avaliacoes.size() + " avaliação(ões) recebida(s)");
 
         int enviados = servico().notificarCriticas(avaliacoes);
         context.getLogger().info("E-mails de urgência enviados: " + enviados);
     }
 
-    private static List<Avaliacao> mapper(String json) throws JsonProcessingException {
+    private static List<Avaliacao> lerAvaliacoes(String json) throws JsonProcessingException {
         return Arrays.asList(MAPPER.readValue(json, Avaliacao[].class));
     }
 

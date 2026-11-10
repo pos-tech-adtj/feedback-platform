@@ -13,28 +13,67 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Persiste avaliações e consulta páginas no Cosmos DB.
+ */
 public class AvaliacaoRepository {
     private static final int DEFAULT_PAGE_SIZE = 100;
     private static final int MAX_PAGE_SIZE = 1_000;
     private final CosmosClientProvider clientProvider;
 
+    /**
+     * Cria o repositório com o provedor compartilhado.
+     */
     public AvaliacaoRepository() {
         this(CosmosClientProvider.getInstance());
     }
 
+    /**
+     * Cria o repositório com o provedor informado.
+     *
+     * @param clientProvider provedor de acesso ao Cosmos DB
+     * @throws NullPointerException se o provedor for nulo
+     */
     public AvaliacaoRepository(CosmosClientProvider clientProvider) {
         this.clientProvider = Objects.requireNonNull(clientProvider, "clientProvider e obrigatorio");
     }
 
+    /**
+     * Insere ou substitui a avaliação pela identidade e partição do documento.
+     *
+     * @param avaliacao avaliação a persistir
+     * @return documento retornado pelo Cosmos DB
+     * @throws NullPointerException se a avaliação for nula
+     * @throws IllegalArgumentException se id, descrição ou dia forem inválidos
+     */
     public Avaliacao salvar(Avaliacao avaliacao) {
         validateAvaliacao(avaliacao);
         return container().upsertItem(avaliacao).getItem();
     }
 
+    /**
+     * Consulta a primeira página a partir do dia, inclusive.
+     *
+     * @param dia data inicial
+     * @return página com tamanho definido por COSMOS_AVALIACOES_PAGE_SIZE (padrão 100)
+     * @throws NullPointerException se dia for nulo
+     * @throws IllegalStateException se o tamanho configurado não for inteiro
+     * @throws IllegalArgumentException se o tamanho estiver fora de 1 a 1.000
+     */
     public PaginaAvaliacao buscarDesde(LocalDate dia) {
         return buscarDesde(dia, null, configuredPageSize());
     }
 
+    /**
+     * Consulta uma página ordenada por dia a partir da data informada.
+     *
+     * @param dia data inicial inclusiva
+     * @param continuationToken token da página anterior ou null para iniciar
+     * @param pageSize tamanho da página entre 1 e 1.000
+     * @return itens e token da próxima página; token null indica o fim
+     * @throws NullPointerException se dia for nulo
+     * @throws IllegalArgumentException se pageSize estiver fora do intervalo
+     */
     public PaginaAvaliacao buscarDesde(LocalDate dia, String continuationToken, int pageSize) {
         Objects.requireNonNull(dia, "dia e obrigatorio");
         if (pageSize < 1 || pageSize > MAX_PAGE_SIZE) {
@@ -90,6 +129,12 @@ public class AvaliacaoRepository {
         }
     }
 
+    /**
+     * Página de resultados da consulta de avaliações.
+     *
+     * @param itens avaliações da página
+     * @param continuationToken token da próxima página ou null ao finalizar
+     */
     public record PaginaAvaliacao(List<Avaliacao> itens, String continuationToken) {
     }
 }

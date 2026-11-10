@@ -10,6 +10,9 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Valida avaliações e gera os dados necessários para persistência.
+ */
 public class AvaliacaoService {
     static final int TAMANHO_MAXIMO_DESCRICAO = 1_000;
     static final int NOTA_MINIMA = 0;
@@ -19,6 +22,9 @@ public class AvaliacaoService {
     private final AvaliacaoRepository repository;
     private final Clock clock;
 
+    /**
+     * Cria o serviço com repositório padrão e relógio de Brasília.
+     */
     public AvaliacaoService() {
         this(new AvaliacaoRepository(), Clock.system(FUSO_HORARIO));
     }
@@ -28,6 +34,14 @@ public class AvaliacaoService {
         this.clock = Objects.requireNonNull(clock, "clock e obrigatorio").withZone(FUSO_HORARIO);
     }
 
+    /**
+     * Valida e persiste uma avaliação com identificador e datas gerados.
+     *
+     * @param descricao texto obrigatório de até 1.000 caracteres após trim
+     * @param nota nota obrigatória entre 0 e 10
+     * @return avaliação registrada
+     * @throws IllegalArgumentException se descrição ou nota forem inválidas
+     */
     public Avaliacao registrar(String descricao, Integer nota) {
         String descricaoValidada = validarDescricao(descricao);
         int notaValidada = validarNota(nota);

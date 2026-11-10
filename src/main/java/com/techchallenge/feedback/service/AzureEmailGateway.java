@@ -4,6 +4,9 @@ import com.azure.communication.email.EmailClient;
 import com.azure.communication.email.EmailClientBuilder;
 import com.azure.communication.email.models.EmailMessage;
 
+/**
+ * Envia mensagens pelo Azure Communication Services.
+ */
 final class AzureEmailGateway implements EmailGateway {
     private final EmailClient client;
 
@@ -13,6 +16,11 @@ final class AzureEmailGateway implements EmailGateway {
                 .buildClient();
     }
 
+    /**
+     * Envia a mensagem e aguarda a conclusão no Azure.
+     *
+     * @param message mensagem a enviar
+     */
     @Override
     public void send(EmailMessage message) {
         client.beginSend(message).getFinalResult();

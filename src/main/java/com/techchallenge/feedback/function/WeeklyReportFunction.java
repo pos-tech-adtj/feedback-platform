@@ -9,20 +9,20 @@ import com.techchallenge.feedback.service.ReportService;
 import java.util.Objects;
 import java.util.logging.Level;
 
+/**
+ * Aciona a geração e o envio do relatório semanal por timer.
+ */
 public class WeeklyReportFunction {
 
-    /*
-     * Formato NCRONTAB: {segundo} {minuto} {hora} {dia} {mês} {dia-da-semana}
-     *
-     * Funções em planos serverless interpretam o cron em UTC, não no horário local.
-     * Brasília está em UTC-3 (sem horário de verão desde 2019), então 08:00 em Brasília = 11:00 UTC.
-     * "0 0 11 * * MON" executa toda segunda-feira às 08:00 de Brasília.
-     */
+    // Segunda-feira às 11h UTC (08h em America/Sao_Paulo), com o host em UTC.
     static final String CRON_SEGUNDA_08H_BRASILIA = "0 0 11 * * MON";
 
     private final ReportService reportService;
     private final EmailService emailService;
 
+    /**
+     * Cria a função com os serviços de relatório e e-mail padrão.
+     */
     public WeeklyReportFunction() {
         this(new ReportService(), new EmailService());
     }
@@ -32,6 +32,12 @@ public class WeeklyReportFunction {
         this.emailService = Objects.requireNonNull(emailService, "emailService e obrigatorio");
     }
 
+    /**
+     * Gera e envia o relatório; propaga falhas de consulta ou envio.
+     *
+     * @param timerInfo metadados do timer fornecidos pelo runtime
+     * @param context contexto de execução e logs
+     */
     @FunctionName("WeeklyReportFunction")
     public void run(
             @TimerTrigger(name = "timerInfo", schedule = CRON_SEGUNDA_08H_BRASILIA) String timerInfo,
@@ -44,4 +50,5 @@ public class WeeklyReportFunction {
             context.getLogger().log(Level.SEVERE, "Erro ao enviar relatorio semanal", exception);
             throw exception;
         }
-    }}
+    }
+}
