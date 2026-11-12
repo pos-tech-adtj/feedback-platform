@@ -19,6 +19,9 @@ import java.util.OptionalDouble;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+/**
+ * Consulta avaliações e monta o relatório semanal em texto simples.
+ */
 public class ReportService {
     static final int DIAS_DO_RELATORIO = 7;
     static final int TAMANHO_PAGINA = 100;
@@ -27,6 +30,9 @@ public class ReportService {
     private final AvaliacaoRepository repository;
     private final Clock clock;
 
+    /**
+     * Cria o serviço com repositório padrão e relógio de Brasília.
+     */
     public ReportService() {
         this(new AvaliacaoRepository(), Clock.system(FUSO_HORARIO));
     }
@@ -37,7 +43,9 @@ public class ReportService {
     }
 
     /**
-     * Gera o relatório dos últimos 7 dias, incluindo hoje (horário de Brasília).
+     * Gera o relatório dos últimos 7 dias, incluindo hoje no horário de Brasília.
+     *
+     * @return relatório consolidado de todas as páginas do período
      */
     public RelatorioSemanal gerarRelatorioSemanal() {
         LocalDate fim = LocalDate.now(clock);
@@ -60,6 +68,17 @@ public class ReportService {
         return todas;
     }
 
+    /**
+     * Dados consolidados do período do relatório.
+     *
+     * @param inicio primeiro dia incluído
+     * @param fim último dia incluído
+     * @param total quantidade de avaliações
+     * @param media média das notas ou vazia quando não houver avaliações
+     * @param quantidadePorDia quantidade por dia com avaliações
+     * @param quantidadePorUrgencia quantidade por urgência presente no período
+     * @param itens avaliações ordenadas por dia e data de envio
+     */
     public record RelatorioSemanal(
             LocalDate inicio,
             LocalDate fim,
@@ -73,7 +92,12 @@ public class ReportService {
         private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
 
         /**
-         * Cálculo puro: não acessa banco nem rede. Considera apenas avaliações com dia entre inicio e fim (inclusive).
+         * Consolida avaliações entre início e fim, inclusive, sem acessar a rede.
+         *
+         * @param inicio primeiro dia incluído
+         * @param fim último dia incluído
+         * @param avaliacoes avaliações a filtrar e consolidar
+         * @return relatório do período
          */
         public static RelatorioSemanal de(LocalDate inicio, LocalDate fim, List<Avaliacao> avaliacoes) {
             List<Avaliacao> noPeriodo = avaliacoes.stream()
@@ -99,10 +123,20 @@ public class ReportService {
             return new RelatorioSemanal(inicio, fim, noPeriodo.size(), media, porDia, porUrgencia, itens);
         }
 
+        /**
+         * Monta o assunto com as datas do período.
+         *
+         * @return assunto do e-mail
+         */
         public String assunto() {
             return "Relatório semanal de avaliações (" + DATA_BR.format(inicio) + " a " + DATA_BR.format(fim) + ")";
         }
 
+        /**
+         * Formata totais, agrupamentos e avaliações em texto simples.
+         *
+         * @return corpo do e-mail
+         */
         public String corpo() {
             StringBuilder corpo = new StringBuilder();
             corpo.append("Relatório semanal de avaliações\n");
@@ -146,6 +180,13 @@ public class ReportService {
             return !dia.isBefore(inicio) && !dia.isAfter(fim);
         }
 
+        /**
+         * Avaliação exibida no relatório.
+         *
+         * @param descricao texto do feedback
+         * @param urgencia classificação pela nota
+         * @param dataEnvio data e hora do envio
+         */
         public record Item(String descricao, Urgencia urgencia, String dataEnvio) {
         }
     }

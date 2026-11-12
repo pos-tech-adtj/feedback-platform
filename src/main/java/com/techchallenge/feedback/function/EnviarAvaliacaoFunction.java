@@ -16,11 +16,17 @@ import com.techchallenge.feedback.service.AvaliacaoService;
 import java.util.Optional;
 import java.util.logging.Level;
 
+/**
+ * Recebe avaliações por HTTP e delega o registro ao serviço.
+ */
 public class EnviarAvaliacaoFunction {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final AvaliacaoService avaliacaoService;
 
+    /**
+     * Cria a função com o serviço de avaliações padrão.
+     */
     public EnviarAvaliacaoFunction() {
         this(new AvaliacaoService());
     }
@@ -29,6 +35,13 @@ public class EnviarAvaliacaoFunction {
         this.avaliacaoService = avaliacaoService;
     }
 
+    /**
+     * Registra uma avaliação e retorna JSON com status 201, 400 ou 500.
+     *
+     * @param request requisição com descrição e nota
+     * @param context contexto de execução e logs
+     * @return avaliação registrada ou mensagem de erro
+     */
     @FunctionName("EnviarAvaliacao")
     public HttpResponseMessage run(
             @HttpTrigger(
@@ -51,6 +64,7 @@ public class EnviarAvaliacaoFunction {
             return erro(request, "erro interno ao registrar avaliacao", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     private static RequisicaoAvaliacao lerCorpo(Optional<String> corpo) throws JsonProcessingException {
         if (corpo == null || corpo.isEmpty() || corpo.get().isBlank()) {
             throw new IllegalArgumentException("corpo da requisicao e obrigatorio");

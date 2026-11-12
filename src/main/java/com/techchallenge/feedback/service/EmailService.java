@@ -6,6 +6,9 @@ import com.azure.communication.email.models.EmailMessage;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Envia e-mails aos administradores configurados no ambiente.
+ */
 public class EmailService {
     private static final String ACS_CONNECTION_STRING = "ACS_CONNECTION_STRING";
     private static final String EMAIL_REMETENTE = "EMAIL_REMETENTE";
@@ -15,6 +18,11 @@ public class EmailService {
     private final List<EmailAddress> administradores;
     private final EmailGateway gateway;
 
+    /**
+     * Carrega ACS_CONNECTION_STRING, EMAIL_REMETENTE e EMAIL_ADMINS.
+     *
+     * @throws IllegalStateException se a configuração estiver ausente ou sem destinatários
+     */
     public EmailService() {
         String connectionString = requiredEnvironmentVariable(ACS_CONNECTION_STRING);
         this.remetente = requiredEnvironmentVariable(EMAIL_REMETENTE);
@@ -29,6 +37,13 @@ public class EmailService {
         this.gateway = gateway;
     }
 
+    /**
+     * Envia texto simples e aguarda a conclusão no provedor.
+     *
+     * @param assunto assunto obrigatório
+     * @param corpo conteúdo obrigatório
+     * @throws IllegalArgumentException se assunto ou corpo estiverem vazios
+     */
     public void enviar(String assunto, String corpo) {
         if (assunto == null || assunto.isBlank()) {
             throw new IllegalArgumentException("O assunto do e-mail é obrigatório");
